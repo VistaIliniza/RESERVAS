@@ -1,0 +1,162 @@
+/* =========================================
+   CABANAS.CSS - DIRECTORIO DE UNIDADES
+   ========================================= */
+
+/* Esta propiedad minmax(320px, 1fr) ya es responsive por naturaleza, 
+   pero la ajustaremos más abajo para celulares pequeños */
+.cabin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    padding-top: 20px;
+}
+
+.cabin-card {
+    background-color: var(--bg-white);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.cabin-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+/* =========================================
+   EFECTO HOVER DE LA IMAGEN (TU CÓDIGO)
+   ========================================= */
+.cabin-image {
+    display: block;
+    width: 100%;
+    height: 220px; 
+    overflow: hidden;
+    position: relative;
+    text-decoration: none;
+}
+
+.cabin-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(39, 70, 42, 0.5); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.image-overlay span {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: var(--brand-dark);
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 30px;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.cabin-image:hover img { transform: scale(1.08); }
+.cabin-image:hover .image-overlay { opacity: 1; }
+.cabin-image:hover .image-overlay span { transform: translateY(0); }
+
+
+/* =========================================
+   CUERPO DE LA TARJETA Y DISEÑO INFERIOR
+   ========================================= */
+.cabin-body {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background: var(--bg-white);
+}
+
+.cabin-body h4 { 
+    font-size: 1.4rem; 
+    font-weight: 800; 
+    color: var(--text-dark); 
+    margin-bottom: 5px; 
+    letter-spacing: -0.5px; 
+}
+
+.cabin-location {
+    color: var(--brand-accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.cabin-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+/* El pie de la tarjeta con el status y el botón */
+.card-footer-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto; /* Empuja esto siempre hacia abajo */
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.badge-status-ok {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.btn-manage {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--brand-dark);
+    transition: color 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn-manage:hover {
+    color: var(--brand-accent);
+}
+
+
+/* =========================================
+   MEDIA QUERIES (RESPONSIVE MÓVIL)
+   ========================================= */
+@media screen and (max-width: 650px) {
+    .cabin-grid {
+        /* Fuerza a que en celulares ocupe todo el ancho disponible */
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding-top: 10px;
+    }
+    
+    .cabin-image {
+        height: 180px; /* Reduce un poquito la altura en móviles */
+    }
+    
+    .cabin-body {
+        padding: 20px;
+    }
+}

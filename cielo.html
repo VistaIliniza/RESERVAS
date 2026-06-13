@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva Vista Cielo | Vista Iliniza</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cielo.css">
+
+    <style>
+        .notification-wrapper { position: relative; }
+        
+        #btn-notificaciones { position: relative; cursor: pointer; }
+        
+        .badge {
+            position: absolute; top: -8px; right: -8px;
+            background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold;
+            width: 18px; height: 18px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .notification-panel {
+            position: absolute; top: 130%; right: 0; width: 320px;
+            background: #ffffff; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
+            opacity: 0; visibility: hidden; transform: translateY(10px);
+            transition: all 0.3s ease; z-index: 9999; text-align: left;
+        }
+
+        .notification-panel.active {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+
+        .notif-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .notif-header h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+        .notif-header .mark-read { font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: 600; }
+        
+        .notif-body { max-height: 300px; overflow-y: auto; }
+        
+        .notif-footer { 
+            padding: 12px; text-align: center; border-top: 1px solid #e2e8f0; 
+            background: #f8fafc; border-radius: 0 0 12px 12px; 
+        }
+        
+        .notif-footer a { color: #27462A; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="img/logo.png" alt="Vista Iliniza Logo">
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link">
+                    <svg class="brand-icon" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Inicio
+                </a>
+                <a href="clientes.html" class="nav-link">
+                    <svg class="brand-icon" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Clientes
+                </a>
+                <a href="cabanas.html" class="nav-link active">
+                    <svg class="brand-icon" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                    Cabañas
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="logout-btn">
+                    <svg class="brand-icon" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Módulo de Reservas - Cielo</h1>
+                <div class="topbar-actions">
+                    <div class="notification-wrapper">
+                        <button class="notify-btn" id="btn-notificaciones">
+                            🔔 Notificaciones 
+                            <span class="badge" id="notif-badge" style="display: none;">0</span>
+                        </button>
+                        
+                        <div class="notification-panel" id="panel-notificaciones">
+                            <div class="notif-header">
+                                <h4>Alertas Recientes</h4>
+                                <a href="#" class="mark-read">Marcar leídas</a>
+                            </div>
+                            <div class="notif-body" id="notif-lista">
+                                </div>
+                            <div class="notif-footer">
+                                <a href="clientes.html">Ver historial</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="avatar">A</div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                
+                <div class="cabana-hero">
+                    <a href="cabanas.html" class="back-link">← Volver al Directorio</a>
+                    <div class="hero-content">
+                        <h2>Vista Cielo</h2>
+                        <div class="hero-tags">
+                            <span class="tag">📍 Vista Iliniza Lodge</span>
+                            <span class="tag">📶 Wi-Fi Alta Velocidad</span>
+                            <span class="tag-status">🟢 Operativa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="booking-module">
+                    
+                    <div class="left-column">
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <button class="cal-nav-btn" id="prev-month">❮</button>
+                                <h3 id="calendar-month-year">Cargando...</h3>
+                                <button class="cal-nav-btn" id="next-month">❯</button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span>
+                            </div>
+                            <div class="calendar-grid" id="calendar-grid-days"></div>
+                            <div class="calendar-legend">
+                                <div class="legend-item"><span class="dot dot-avail"></span> Disponible</div>
+                                <div class="legend-item"><span class="dot dot-occ"></span> Ocupado</div>
+                                <div class="legend-item"><span class="dot dot-sel"></span> Tu Selección</div>
+                            </div>
+                        </div>
+
+                        <div class="clients-registered-container">
+                            <h3>Clientes en Vista Cielo</h3>
+                            <div id="lista-tarjetas-clientes"></div>
+                        </div>
+                    </div>
+
+                    <div class="reservation-panel">
+                        <div class="panel-header">
+                            <h3>Gestión de Reserva</h3>
+                            <p>Registra al cliente y bloquea las fechas.</p>
+                        </div>
+                        <form class="reservation-form" id="form-reserva">
+                            <div class="form-group">
+                                <label>Nombres completos</label>
+                                <input type="text" id="cliente-nombre" placeholder="Ej. Juan Pérez" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de cédula</label>
+                                <input type="number" id="cliente-cedula" placeholder="Ej. 1700000000" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Correo electrónico</label>
+                                    <input type="email" id="cliente-correo" placeholder="correo@ejemplo.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Número celular</label>
+                                    <input type="number" id="cliente-celular" placeholder="0990000000" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha de ingreso</label>
+                                    <input type="date" id="checkin-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha de salida</label>
+                                    <input type="date" id="checkout-input" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" id="btn-guardar" style="width: 100%; margin-top: 10px;">
+                                <span id="btn-text">Confirmar Reserva</span>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/cielo.js"></script>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>

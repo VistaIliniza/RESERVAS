@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio de Clientes | Vista Iliniza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .search-container { margin-bottom: 25px; }
+        .search-container input { width: 100%; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.3s; }
+        .search-container input:focus { border-color: var(--brand-dark); box-shadow: 0 0 0 3px rgba(39, 70, 42, 0.1); }
+        .table-container { background: var(--bg-white); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 16px 20px; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 16px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        .client-profile { display: flex; align-items: center; gap: 12px; }
+        .client-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
+        .client-name { font-weight: 700; color: var(--text-dark); font-size: 0.95rem; margin-bottom: 3px; }
+        .client-id { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+        .action-buttons { display: flex; gap: 8px; align-items: center; }
+        .btn-action { padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-wsp { background: #10b981; color: white; } .btn-wsp:hover { background: #059669; transform: translateY(-2px); }
+        .btn-edit { background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border); } .btn-edit:hover { background: #e2e8f0; }
+        .btn-delete { background: #fef2f2; color: #ef4444; } .btn-delete:hover { background: #fee2e2; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; transform: translateY(20px); transition: all 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;}
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .form-group { margin-bottom: 15px; } 
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; } 
+        .form-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; }
+        .form-row-dates { display: flex; gap: 10px; }
+        .form-row-dates .form-group { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header"><img src="img/logo.png" alt="Vista Iliniza Logo"></div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link"><svg class="brand-icon" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Inicio</a>
+                <a href="clientes.html" class="nav-link active"><svg class="brand-icon" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>Clientes</a>
+                <a href="cabanas.html" class="nav-link"><svg class="brand-icon" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>Cabañas</a>
+            </nav>
+            <div class="sidebar-footer"><button class="logout-btn"><svg class="brand-icon" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Cerrar Sesión</button></div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Directorio de Clientes</h1>
+                <div class="topbar-actions">
+                    <div class="notification-wrapper">
+                        <button class="notify-btn" id="btn-notificaciones">🔔 Notificaciones <span class="badge" id="notif-badge" style="display: none;">0</span></button>
+                        <div class="notif-panel" id="panel-notificaciones">
+                            <div class="notif-header"><h4>Alertas Recientes</h4><button class="mark-read">Marcar leídas</button></div>
+                            <div class="notif-body" id="notif-lista"></div>
+                            <div class="notif-footer"><a href="#">Ver historial</a></div>
+                        </div>
+                    </div>
+                    <div class="avatar">A</div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="search-container">
+                    <input type="text" id="buscador-clientes" placeholder="Buscar por nombre, cédula o celular...">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Cliente</th><th>Cédula</th><th>Contacto</th><th>Estadía</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="tabla-clientes-body"></tbody>
+                    </table>
+                    <div id="empty-state" style="padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600;">Cargando base de datos...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modal-editar">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 5px; color: var(--text-dark);">Editar Cliente</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Actualiza la información de contacto y estadía.</p>
+            <form id="form-editar">
+                <div class="form-group">
+                    <label>Nombres completos</label>
+                    <input type="text" id="edit-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Cédula (No editable)</label>
+                    <input type="text" id="edit-cedula" readonly style="background: #f1f5f9; color: #94a3b8; cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>Número celular</label>
+                    <input type="number" id="edit-celular" required>
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="edit-correo">
+                </div>
+                
+                <div class="form-row-dates">
+                    <div class="form-group">
+                        <label>Fecha de Ingreso</label>
+                        <input type="date" id="edit-ingreso" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Salida</label>
+                        <input type="date" id="edit-salida" required>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" id="btn-cancelar-edit" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted);">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-borrar">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;">⚠️</div>
+            <h3 style="margin-bottom: 10px; color: var(--text-dark);">¿Eliminar Cliente?</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Esta acción borrará al cliente del Excel de forma permanente. No se puede deshacer.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button type="button" id="btn-cancelar-borrar" style="padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted); background: white;">Cancelar</button>
+                <button type="button" class="btn-primary" id="btn-confirmar-borrar" style="background: #ef4444; box-shadow: 0 8px 15px -6px rgba(239, 68, 68, 0.4);">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/clientes.js"></script>
+</body>
+</html>

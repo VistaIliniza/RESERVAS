@@ -1,0 +1,223 @@
+/* =========================================
+   CLIENTES.CSS - MÓDULO DE BASE DE DATOS
+   ========================================= */
+
+/* Barra de búsqueda y botones */
+.search-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 600px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-muted);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background-color: var(--bg-white);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 4px rgba(237, 176, 10, 0.1);
+}
+
+/* Contenedor de la Tabla */
+.table-container {
+    background-color: var(--bg-white);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    overflow: hidden;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.premium-table th {
+    background-color: #f8fafc;
+    padding: 18px 25px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+}
+
+.premium-table td {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.premium-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.premium-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+/* Celda de Perfil del Cliente */
+.client-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.client-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--brand-dark);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.client-name {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.client-id {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Estados */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.status-frecuente { background-color: rgba(237, 176, 10, 0.15); color: #b48600; }
+.status-nuevo { background-color: rgba(16, 185, 129, 0.15); color: #059669; }
+
+/* Botón WhatsApp Tabla */
+.btn-action-wsp, .btn-wsp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background-color: #25D366;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-action-wsp:hover, .btn-wsp:hover {
+    background-color: #128C7E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+}
+
+.empty-state {
+    padding: 50px;
+    text-align: center;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+
+/* =========================================
+   AGREGADOS NECESARIOS PARA EL MODAL Y RESPONSIVE
+   ========================================= */
+
+/* Contenedor responsive para la tabla en celulares */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Evita que la tabla se aplaste feo en celular */
+.premium-table { min-width: 800px; }
+
+/* Botones extra de la tabla (Editar y Borrar) */
+.action-buttons {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+
+.btn-action {
+    padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; 
+    cursor: pointer; transition: all 0.2s; border: none; text-align: center;
+}
+
+.btn-edit { background-color: #f1f5f9; color: var(--brand-dark); }
+.btn-edit:hover { background-color: #e2e8f0; }
+
+.btn-delete { background-color: #fef2f2; color: #ef4444; }
+.btn-delete:hover { background-color: #fecaca; }
+
+/* Ventana Modal Oscura de Edición */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+    z-index: 100; opacity: 0; visibility: hidden; transition: all 0.3s; padding: 20px;
+}
+
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal-content {
+    background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: translateY(20px); transition: all 0.3s;
+}
+
+.modal-overlay.active .modal-content { transform: translateY(0); }
+
+.modal-content h3 { font-size: 1.4rem; color: var(--brand-dark); margin-bottom: 5px; }
+.modal-content p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+.form-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; outline: none; }
+.form-group input:focus { border-color: var(--brand-dark); }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+.btn-cancelar { padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border); background: white; font-weight: 700; cursor: pointer; flex: 1; transition: background 0.3s;}
+.btn-cancelar:hover { background: #f1f5f9; }
+
+/* Ajuste buscador en móviles */
+@media screen and (max-width: 1024px) {
+    .search-box { max-width: 100%; }
+}
