@@ -6,15 +6,15 @@
     <title>Directorio de Clientes | Vista Iliniza</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="css/clientes.css">
+    
     <style>
         .search-container { margin-bottom: 25px; }
         .search-container input { width: 100%; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.3s; }
         .search-container input:focus { border-color: var(--brand-dark); box-shadow: 0 0 0 3px rgba(39, 70, 42, 0.1); }
         .table-container { background: var(--bg-white); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: #f8fafc; padding: 16px 20px; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 16px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
+        
         .client-profile { display: flex; align-items: center; gap: 12px; }
         .client-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
         .client-name { font-weight: 700; color: var(--text-dark); font-size: 0.95rem; margin-bottom: 3px; }
@@ -70,12 +70,14 @@
                     <input type="text" id="buscador-clientes" placeholder="Buscar por nombre, cédula o celular...">
                 </div>
                 <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Cliente</th><th>Cédula</th><th>Contacto</th><th>Estadía</th><th>Acciones</th></tr>
-                        </thead>
-                        <tbody id="tabla-clientes-body"></tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="premium-table">
+                            <thead>
+                                <tr><th>Cliente</th><th>Cédula</th><th>Contacto</th><th>Estadía</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody id="tabla-clientes-body"></tbody>
+                        </table>
+                    </div>
                     <div id="empty-state" style="padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600;">Cargando base de datos...</div>
                 </div>
             </div>

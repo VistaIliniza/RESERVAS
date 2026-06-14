@@ -42,7 +42,7 @@
         }
         
         .notif-header h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
-        .notif-header .mark-read { font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: 600; }
+        .notif-header .mark-read { font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: 600; background: none; border: none; cursor: pointer; }
         
         .notif-body { max-height: 300px; overflow-y: auto; }
         
@@ -99,10 +99,9 @@
                         <div class="notification-panel" id="panel-notificaciones">
                             <div class="notif-header">
                                 <h4>Alertas Recientes</h4>
-                                <a href="#" class="mark-read">Marcar leídas</a>
+                                <button class="mark-read">Marcar leídas</button>
                             </div>
-                            <div class="notif-body" id="notif-lista">
-                                </div>
+                            <div class="notif-body" id="notif-lista"></div>
                             <div class="notif-footer">
                                 <a href="clientes.html">Ver historial</a>
                             </div>
@@ -112,7 +111,7 @@
                 </div>
             </header>
 
-            <div class="content-area">
+            <div class="content area">
                 
                 <div class="cabana-hero">
                     <a href="cabanas.html" class="back-link">← Volver al Directorio</a>
@@ -198,7 +197,6 @@
     </div>
 
     <script src="js/cotopaxi.js"></script>
-    
     <script src="js/app.js"></script>
 </body>
 </html>
