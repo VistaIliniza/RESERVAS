@@ -4,9 +4,9 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 🔴 URL OFICIAL DE LA BASE DE DATOS DEL LODGE CONFIGURADA
-    const API_URL = "https://script.google.com/macros/s/AKfycbyHiMKRmedyeaNDs6JEHotpe2Q00Svw_HZg6tHNQwROHz5rz5zCTspoBwoP6A4TFnuk/exec";
-
+    // 🔥 AQUÍ ESTABA EL DETALLE: FALTABA LA LLAVE ?action=admin 🔥
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
+    
     // 1. Mostrar la fecha actual
     const dateBadge = document.getElementById('current-date');
     if (dateBadge) {

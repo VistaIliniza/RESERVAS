@@ -1,11 +1,46 @@
 // =========================================
-// CIELO.JS - DETECCIÓN DE FECHAS OCUPADAS AL TOCAR
+// CIELO.JS - LÓGICA DE OVERLAP AVANZADA Y ALERTA VISUAL DE RECAMBIO
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 🔴 NUEVA URL DE LA BASE DE DATOS REAL
-    const API_URL = "https://script.google.com/macros/s/AKfycbyHiMKRmedyeaNDs6JEHotpe2Q00Svw_HZg6tHNQwROHz5rz5zCTspoBwoP6A4TFnuk/exec";
+    // 🔴 URL OFICIAL DEL LODGE CONFIGURADA CORRECTAMENTE COMO API_URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
+    
+    // Inyección de estilos CSS dinámicos
+    const estiloCalendario = document.createElement('style');
+    estiloCalendario.innerHTML = `
+        /* Días normales a la mitad */
+        .cal-day.checkout-day { background: linear-gradient(to right, #ef4444 50%, #f8fafc 50%); color: #0f172a; border: 1px solid #e2e8f0; }
+        .cal-day.checkin-day { background: linear-gradient(to right, #f8fafc 50%, #ef4444 50%); color: #0f172a; border: 1px solid #e2e8f0; }
+        
+        /* Día totalmente ocupado */
+        .cal-day.full-day { background: #ef4444; color: white; border: none; }
+        
+        /* 🔥 NUEVO: DÍA COMPARTIDO (CRUCE DE HORARIOS) VISUALMENTE DISTINTO 🔥 */
+        .cal-day.split-day { 
+            background: linear-gradient(to right, #ef4444 50%, #10b981 50%); 
+            color: white; 
+            font-weight: 900; 
+            border: 2px solid #0f172a; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Estilos para la notificación de recambio (Cruce de clientes) */
+        .toast-cruce { width: 350px !important; padding: 15px !important; display: block !important; }
+        .cruce-header { font-size: 0.9rem; font-weight: 800; color: #d97706; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 8px; }
+        .cruce-body { display: flex; gap: 10px; }
+        .cruce-box { flex: 1; padding: 10px; border-radius: 8px; }
+        .cruce-out { background: #fee2e2; border: 1px solid #fca5a5; }
+        .cruce-in { background: #d1fae5; border: 1px solid #6ee7b7; }
+        .cruce-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        .cruce-out .cruce-label { color: #ef4444; }
+        .cruce-in .cruce-label { color: #10b981; }
+        .cruce-name { font-size: 0.85rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    `;
+    document.head.appendChild(estiloCalendario);
 
     const gridDays = document.getElementById('calendar-grid-days');
     const monthYearTitle = document.getElementById('calendar-month-year');
@@ -23,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let checkinDateStr = ""; 
     let checkoutDateStr = "";
     
-    let fechasOcupadas = []; 
+    let diasEstado = {}; 
     let infoFechasOcupadas = {}; 
 
     function renderCalendar() {
@@ -45,28 +80,20 @@ document.addEventListener('DOMContentLoaded', () => {
             dayDiv.textContent = i;
             dayDiv.dataset.date = dateString;
 
-            if (fechasOcupadas.includes(dateString)) {
-                dayDiv.className = 'cal-day occupied';
-                dayDiv.style.cursor = 'pointer';
-                dayDiv.addEventListener('click', () => {
-                    const datosCliente = infoFechasOcupadas[dateString];
-                    
-                    // MEJORA: Protección por si el cliente no tiene nombre o número en el Excel
-                    let nombreMostrar = datosCliente.nombres || "Sin nombre";
-                    let celFormateado = String(datosCliente.celular || "");
-                    
-                    if(celFormateado.startsWith("'")) celFormateado = celFormateado.substring(1);
-                    if(celFormateado.length === 9) celFormateado = "0" + celFormateado;
-                    if(celFormateado === "") celFormateado = "Sin número";
+            const estado = diasEstado[dateString];
 
-                    mostrarNotificacion("Día Reservado 🔒", `Ocupado por: ${nombreMostrar} | Cel: ${celFormateado}`);
-                });
+            if (estado) {
+                dayDiv.className = `cal-day occupied ${estado}-day`;
+                dayDiv.style.cursor = 'pointer';
+                dayDiv.addEventListener('click', () => handleDayClick(dateString));
             } else {
                 dayDiv.className = 'cal-day available';
-                if (dateString === checkinDateStr || dateString === checkoutDateStr) dayDiv.classList.add('selected');
-                if (checkinDateStr && checkoutDateStr && dateString > checkinDateStr && dateString < checkoutDateStr) dayDiv.classList.add('in-range');
                 dayDiv.addEventListener('click', () => handleDayClick(dateString));
             }
+
+            if (dateString === checkinDateStr || dateString === checkoutDateStr) dayDiv.classList.add('selected');
+            if (checkinDateStr && checkoutDateStr && dateString > checkinDateStr && dateString < checkoutDateStr) dayDiv.classList.add('in-range');
+
             gridDays.appendChild(dayDiv);
         }
     }
@@ -76,28 +103,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
             
-            const reservasCabaña = datos.filter(reserva => 
-                String(reserva.cabana).toLowerCase().includes("cielo")
-            );
-            
+            const reservasCabaña = datos.filter(reserva => String(reserva.cabana).toLowerCase().includes("cielo"));
             const listaTarjetas = document.getElementById('lista-tarjetas-clientes');
             
             reservasCabaña.forEach(reserva => {
                 if(reserva.ingreso && reserva.salida) {
-                    let current = new Date(reserva.ingreso + 'T12:00:00');
-                    let end = new Date(reserva.salida + 'T12:00:00');
-                    while(current <= end) {
-                        let dStr = current.toISOString().split('T')[0];
-                        fechasOcupadas.push(dStr);
-                        infoFechasOcupadas[dStr] = reserva; 
+                    let dIngreso = new Date(reserva.ingreso + 'T12:00:00');
+                    let dSalida = new Date(reserva.salida + 'T12:00:00');
+                    
+                    let strIngreso = dIngreso.toISOString().split('T')[0];
+                    let strSalida = dSalida.toISOString().split('T')[0];
+
+                    diasEstado[strIngreso] = (diasEstado[strIngreso] === 'checkout') ? 'split' : 'checkin';
+                    infoFechasOcupadas[strIngreso] = infoFechasOcupadas[strIngreso] || [];
+                    infoFechasOcupadas[strIngreso].push({ tipo: 'ingreso', data: reserva });
+
+                    let current = new Date(dIngreso);
+                    current.setDate(current.getDate() + 1);
+                    while(current < dSalida) {
+                        let strCurrent = current.toISOString().split('T')[0];
+                        diasEstado[strCurrent] = 'full';
+                        infoFechasOcupadas[strCurrent] = infoFechasOcupadas[strCurrent] || [];
+                        infoFechasOcupadas[strCurrent].push({ tipo: 'estadia', data: reserva });
                         current.setDate(current.getDate() + 1);
                     }
+
+                    if (diasEstado[strSalida] === 'checkin') {
+                        diasEstado[strSalida] = 'split';
+                    } else if (diasEstado[strSalida] !== 'full' && diasEstado[strSalida] !== 'split') {
+                        diasEstado[strSalida] = 'checkout';
+                    }
+                    infoFechasOcupadas[strSalida] = infoFechasOcupadas[strSalida] || [];
+                    infoFechasOcupadas[strSalida].push({ tipo: 'salida', data: reserva });
                 }
                 
                 if(listaTarjetas && reserva.nombres) {
-                    let celularMostrar = String(reserva.celular);
-                    if (celularMostrar.startsWith("'")) celularMostrar = celularMostrar.substring(1);
-                    if (celularMostrar.length === 9 && celularMostrar.startsWith("9")) celularMostrar = "0" + celularMostrar;
+                    let celularMostrar = String(reserva.celular).replace(/^'/, "");
+                    celularMostrar = (celularMostrar.length === 9 && celularMostrar.startsWith("9")) ? "0" + celularMostrar : celularMostrar;
 
                     const htmlTarjeta = `
                         <div class="client-card">
@@ -119,15 +161,122 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleDayClick(dateString) {
-        if (!checkinDateStr || (checkinDateStr && checkoutDateStr)) {
-            checkinDateStr = dateString; checkoutDateStr = "";
-        } else if (checkinDateStr && !checkoutDateStr) {
-            if (dateString > checkinDateStr) { checkoutDateStr = dateString; } 
-            else if (dateString < checkinDateStr) { checkoutDateStr = checkinDateStr; checkinDateStr = dateString; } 
-            else { checkinDateStr = dateString; }
+    function mostrarNotificacionCruce(clienteSalida, clienteIngreso) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
         }
-        inputCheckin.value = checkinDateStr; inputCheckout.value = checkoutDateStr;
+        const toast = document.createElement('div');
+        toast.className = 'custom-toast toast-cruce';
+        toast.innerHTML = `
+            <div class="cruce-header">
+                ⚠️ Atención: Día de Recambio
+            </div>
+            <div class="cruce-body">
+                <div class="cruce-box cruce-out">
+                    <div class="cruce-label">⬅️ Sale en la mañana</div>
+                    <div class="cruce-name">${clienteSalida.nombres}</div>
+                </div>
+                <div class="cruce-box cruce-in">
+                    <div class="cruce-label">➡️ Entra en la tarde</div>
+                    <div class="cruce-name">${clienteIngreso.nombres}</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 5500); 
+    }
+
+    function mostrarNotificacionEstandar(titulo, mensaje) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        toast.innerHTML = `<div class="toast-icon">✅</div><div class="toast-content"><h4>${titulo}</h4><p>${mensaje}</p></div>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000); 
+    }
+
+    function handleDayClick(dateString) {
+        const estado = diasEstado[dateString];
+        const registros = infoFechasOcupadas[dateString] || [];
+
+        if (registros.length > 0) {
+            const ingresos = registros.filter(r => r.tipo === 'ingreso');
+            const salidas = registros.filter(r => r.tipo === 'salida');
+            const estadias = registros.filter(r => r.tipo === 'estadia');
+
+            if (salidas.length > 0 && ingresos.length > 0) {
+                mostrarNotificacionCruce(salidas[0].data, ingresos[0].data);
+            } 
+            else {
+                let mensajeNotif = "";
+                registros.forEach(reg => {
+                    let nombre = reg.data.nombres || "Sin nombre";
+                    if (reg.tipo === 'ingreso') mensajeNotif += `Llegada (Tarde): ${nombre}. `;
+                    if (reg.tipo === 'salida') mensajeNotif += `Salida (Mañana): ${nombre}. `;
+                    if (reg.tipo === 'estadia') mensajeNotif += `Ocupado por: ${nombre}. `;
+                });
+                mostrarNotificacionEstandar("Información del día", mensajeNotif);
+            }
+        }
+
+        if (!checkinDateStr || (checkinDateStr && checkoutDateStr)) {
+            if (estado === 'checkin' || estado === 'full' || estado === 'split') {
+                if (registros.length === 0) mostrarNotificacionEstandar("Fecha bloqueada", "La tarde de este día ya está reservada.");
+                return;
+            }
+            checkinDateStr = dateString;
+            checkoutDateStr = "";
+        } else if (checkinDateStr && !checkoutDateStr) {
+            if (dateString > checkinDateStr) {
+                if (estado === 'checkout' || estado === 'full' || estado === 'split') {
+                    if (registros.length === 0) mostrarNotificacionEstandar("Fecha bloqueada", "La mañana de este día está reservada.");
+                    return;
+                }
+
+                let tieneBloqueo = false;
+                let startCheck = new Date(checkinDateStr + 'T12:00:00');
+                let endCheck = new Date(dateString + 'T12:00:00');
+                startCheck.setDate(startCheck.getDate() + 1);
+
+                while (startCheck < endCheck) {
+                    let dStr = startCheck.toISOString().split('T')[0];
+                    if (diasEstado[dStr]) {
+                        tieneBloqueo = true;
+                        break;
+                    }
+                    startCheck.setDate(startCheck.getDate() + 1);
+                }
+
+                if (tieneBloqueo) {
+                    mostrarNotificacionEstandar("Rango inválido", "No puedes seleccionar fechas pasando por encima de una reserva existente.");
+                    return;
+                }
+
+                checkoutDateStr = dateString;
+            } else if (dateString < checkinDateStr) {
+                if (estado === 'checkin' || estado === 'full' || estado === 'split') {
+                    if (registros.length === 0) mostrarNotificacionEstandar("Fecha bloqueada", "La tarde de este día ya está reservada.");
+                    return;
+                }
+                checkinDateStr = dateString;
+            } else {
+                checkinDateStr = "";
+                checkoutDateStr = "";
+            }
+        }
+
+        if(inputCheckin) inputCheckin.value = checkinDateStr;
+        if(inputCheckout) inputCheckout.value = checkoutDateStr;
         renderCalendar();
     }
 
@@ -139,33 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
     cargarReservas();
 
-    function mostrarNotificacion(titulo, mensaje) {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = 'custom-toast';
-        toast.innerHTML = `
-            <div class="toast-icon">✅</div>
-            <div class="toast-content">
-                <h4>${titulo}</h4>
-                <p>${mensaje}</p>
-            </div>
-        `;
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => toast.classList.add('show'), 10);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        }, 4000); 
-    }
-
     const formReserva = document.getElementById('form-reserva');
     const btnGuardar = document.getElementById('btn-guardar');
     const btnText = document.getElementById('btn-text');
@@ -173,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formReserva.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         if(!checkinDateStr || !checkoutDateStr) { 
-            mostrarNotificacion("Faltan fechas", "Por favor selecciona fechas en el calendario.");
+            mostrarNotificacionEstandar("Faltan fechas", "Por favor selecciona fechas en el calendario.");
             return; 
         }
 
@@ -187,14 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGuardar.style.opacity = "0.7";
 
         const reservaData = {
-            action: "create",
-            nombres: nombre,
-            cedula: cedula,
-            correo: correo || "",
-            celular: celular,
-            cabana: "Vista Cielo",
-            ingreso: checkinDateStr,
-            salida: checkoutDateStr
+            action: "create", nombres: nombre, cedula: cedula, correo: correo || "",
+            celular: celular, cabana: "Vista Cielo", ingreso: checkinDateStr, salida: checkoutDateStr
         };
 
         try {
@@ -203,37 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(reservaData)
             });
 
-            let celularMostrar = celular.substring(1);
-            if (celularMostrar.length === 9 && celularMostrar.startsWith("9")) celularMostrar = "0" + celularMostrar;
-
-            const htmlTarjeta = `
-                <div class="client-card">
-                    <div class="client-info">
-                        <h4>${nombre}</h4>
-                        <p>C.I: ${cedula} | 📞 ${celularMostrar}</p>
-                        <p>✉️ ${correo || 'N/A'}</p>
-                        <div class="client-dates">🗓️ ${checkinDateStr} / ${checkoutDateStr}</div>
-                    </div>
-                    <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${nombre}..." target="_blank" class="btn-whatsapp">WhatsApp</a>
-                </div>
-            `;
-            document.getElementById('lista-tarjetas-clientes').insertAdjacentHTML('afterbegin', htmlTarjeta);
-
-            let current = new Date(checkinDateStr + 'T12:00:00');
-            let end = new Date(checkoutDateStr + 'T12:00:00');
-            while(current <= end) {
-                let dStr = current.toISOString().split('T')[0];
-                fechasOcupadas.push(dStr);
-                infoFechasOcupadas[dStr] = {nombres: nombre, celular: celular}; 
-                current.setDate(current.getDate() + 1);
-            }
-
-            formReserva.reset(); 
-            checkinDateStr = ""; 
-            checkoutDateStr = ""; 
-            renderCalendar(); 
-            
-            mostrarNotificacion("¡Reserva Confirmada!", `El cliente ${nombre} ha sido guardado exitosamente.`);
+            setTimeout(() => { window.location.reload(); }, 1500);
+            mostrarNotificacionEstandar("Reserva confirmada", "Registro guardado exitosamente. Actualizando el calendario.");
 
         } catch (error) { 
             console.error(error);

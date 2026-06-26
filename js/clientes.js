@@ -4,8 +4,9 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 🔴 URL OFICIAL DEL LODGE CONFIGURADA
-const API_URL = "https://script.google.com/macros/s/AKfycbyHiMKRmedyeaNDs6JEHotpe2Q00Svw_HZg6tHNQwROHz5rz5zCTspoBwoP6A4TFnuk/exec";
+    // 🔴 URL OFICIAL DEL LODGE CONFIGURADA CORRECTAMENTE COMO API_URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
+    
     const tablaBody = document.getElementById('tabla-clientes-body');
     const inputBuscador = document.getElementById('buscador-clientes');
     const emptyState = document.getElementById('empty-state');

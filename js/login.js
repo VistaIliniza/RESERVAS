@@ -1,40 +1,52 @@
 // =========================================
-// LOGIN.JS - CONTROL DE ACCESO DE SEGURIDAD
+// LOGIN.JS - CONTROL DE ACCESO SEGURO VÍA GET
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const errorAlert = document.getElementById('error-alert');
+    const btnSubmit = document.querySelector('.btn-login');
 
-    // AQUÍ DEFINIMOS TUS CREDENCIALES EXACTAS
-    const USUARIO_VALIDO = "administracion";
-    const CONTRASEÑA_VALIDA = "iliniza2026";
+    // Nueva URL de la implementación configurada
+    const API_URL = "https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec";
 
     if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
-            // Evita que la página se recargue al darle al botón
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Capturamos lo que el usuario escribió quitando espacios en blanco a los lados
             const userIn = document.getElementById('username').value.trim();
             const passIn = document.getElementById('password').value.trim();
 
-            // Comparamos si es exactamente igual
-            if (userIn === USUARIO_VALIDO && passIn === CONTRASEÑA_VALIDA) {
-                
-                // ¡Éxito! Guardamos un "token" en la memoria temporal del navegador
-                // Esto es lo que usaremos luego para saber si el usuario de verdad inició sesión
-                sessionStorage.setItem('sesion_activa', 'true');
-                
-                // Lo enviamos a la página principal del sistema
-                window.location.href = "index.html";
-                
-            } else {
-                // ¡Error! Mostramos el mensaje rojo que estaba oculto
+            const originalText = btnSubmit.textContent;
+            btnSubmit.textContent = "Verificando...";
+            btnSubmit.disabled = true;
+            errorAlert.style.display = "none";
+
+            // armamos la url con los datos para mandarlos por GET y evitar el bloqueo cors
+            const urlLogin = `${API_URL}?action=login&usuario=${encodeURIComponent(userIn)}&password=${encodeURIComponent(passIn)}`;
+
+            try {
+                const response = await fetch(urlLogin, {
+                    method: "GET"
+                });
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    sessionStorage.setItem('sesion_activa', 'true');
+                    window.location.href = "index.html";
+                } else {
+                    errorAlert.textContent = "Usuario o contraseña incorrectos.";
+                    errorAlert.style.display = "block";
+                    document.getElementById('password').value = "";
+                }
+            } catch (error) {
+                console.error("Error en la conexión:", error);
+                errorAlert.textContent = "Problema de conexión con el servidor. Intenta de nuevo.";
                 errorAlert.style.display = "block";
-                
-                // Borramos la contraseña para que tenga que escribirla de nuevo
-                document.getElementById('password').value = "";
+            } finally {
+                btnSubmit.textContent = originalText;
+                btnSubmit.disabled = false;
             }
         });
     }

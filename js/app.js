@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const badgeNotif = document.getElementById('notif-badge');
     const listaNotif = document.getElementById('notif-lista');
 
-    // 🔴 TU URL NUEVA EXACTA PARA BUSCAR NOTIFICACIONES (CUENTA DEL LODGE)
-    const API_URL = "https://script.google.com/macros/s/AKfycbyHiMKRmedyeaNDs6JEHotpe2Q00Svw_HZg6tHNQwROHz5rz5zCTspoBwoP6A4TFnuk/exec";
+    // 🔴 URL OFICIAL DE LA BASE DE DATOS (PARA NOTIFICACIONES)
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec';
 
     // Variable global para saber cuántas reservas hay en total ahorita
     let totalAlertasActuales = 0;
@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // =========================================
             let leidasGuardadas = parseInt(localStorage.getItem('notificaciones_leidas_total')) || 0;
             
-            // Si tú borras un cliente manualmente, el total baja. Ajustamos la memoria para que no se trabe el conteo.
             if (totalAlertasActuales < leidasGuardadas) {
                 leidasGuardadas = totalAlertasActuales;
                 localStorage.setItem('notificaciones_leidas_total', leidasGuardadas);
@@ -118,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation();
             
-            // Guardamos el total actual como "ya visto"
             localStorage.setItem('notificaciones_leidas_total', totalAlertasActuales);
             
             if (badgeNotif) badgeNotif.style.display = 'none';
