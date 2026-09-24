@@ -1,23 +1,16 @@
 // =========================================
-// CUMBAYA.JS - LÓGICA DE CALENDARIO Y GESTIÓN PARA VISTA CUMBAYÁ
+// CUMBAYA.JS - LÓGICA OPTIMIZADA DE RESERVAS Y CALENDARIO
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // URL OFICIAL DEL LODGE (Google Apps Script API)
     const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
     
-    // Inyección de estilos CSS dinámicos
     const estiloCalendario = document.createElement('style');
     estiloCalendario.innerHTML = `
-        /* Días normales a la mitad */
         .cal-day.checkout-day { background: linear-gradient(to right, #ef4444 50%, #f8fafc 50%); color: #0f172a; border: 1px solid #e2e8f0; }
         .cal-day.checkin-day { background: linear-gradient(to right, #f8fafc 50%, #ef4444 50%); color: #0f172a; border: 1px solid #e2e8f0; }
-        
-        /* Día totalmente ocupado */
         .cal-day.full-day { background: #ef4444; color: white; border: none; }
-        
-        /* DÍA COMPARTIDO (CRUCE DE HORARIOS) */
         .cal-day.split-day { 
             background: linear-gradient(to right, #ef4444 50%, #10b981 50%); 
             color: white; 
@@ -27,8 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
             position: relative;
             z-index: 2;
         }
-        
-        /* Estilos para la notificación de recambio */
         .toast-cruce { width: 350px !important; padding: 15px !important; display: block !important; }
         .cruce-header { font-size: 0.9rem; font-weight: 800; color: #d97706; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 8px; }
         .cruce-body { display: flex; gap: 10px; }
@@ -39,6 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
         .cruce-out .cruce-label { color: #ef4444; }
         .cruce-in .cruce-label { color: #10b981; }
         .cruce-name { font-size: 0.85rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+
+        #lista-tarjetas-clientes {
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
     `;
     document.head.appendChild(estiloCalendario);
 
@@ -103,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
             
-            // Filtro específico para Vista Cumbayá
             const reservasCabana = datos.filter(reserva => String(reserva.cabana).toLowerCase().includes("cumbay"));
             const listaTarjetas = document.getElementById('lista-tarjetas-clientes');
             
@@ -137,25 +133,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     infoFechasOcupadas[strSalida] = infoFechasOcupadas[strSalida] || [];
                     infoFechasOcupadas[strSalida].push({ tipo: 'salida', data: reserva });
                 }
-                
-                if(listaTarjetas && reserva.nombres) {
-                    let celularMostrar = String(reserva.celular).replace(/^'/, "");
-                    celularMostrar = (celularMostrar.length === 9 && celularMostrar.startsWith("9")) ? "0" + celularMostrar : celularMostrar;
-
-                    const htmlTarjeta = `
-                        <div class="client-card">
-                            <div class="client-info">
-                                <h4>${reserva.nombres}</h4>
-                                <p>C.I: ${reserva.cedula} | 📞 ${celularMostrar}</p>
-                                <p>✉️ ${reserva.correo || 'N/A'}</p>
-                                <div class="client-dates">🗓️ ${reserva.ingreso} / ${reserva.salida}</div>
-                            </div>
-                            <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${encodeURIComponent(reserva.nombres)}..." target="_blank" class="btn-whatsapp">WhatsApp</a>
-                        </div>
-                    `;
-                    listaTarjetas.insertAdjacentHTML('beforeend', htmlTarjeta);
-                }
             });
+
+            if(listaTarjetas) {
+                listaTarjetas.innerHTML = '';
+                const ultimasReservas = reservasCabana.slice(-10).reverse();
+
+                ultimasReservas.forEach(reserva => {
+                    if(reserva.nombres) {
+                        let celularMostrar = String(reserva.celular).replace(/^'/, "");
+                        celularMostrar = (celularMostrar.length === 9 && celularMostrar.startsWith("9")) ? "0" + celularMostrar : celularMostrar;
+
+                        const htmlTarjeta = `
+                            <div class="client-card">
+                                <div class="client-info">
+                                    <h4>${reserva.nombres}</h4>
+                                    <p>C.I: ${reserva.cedula} | 📞 ${celularMostrar}</p>
+                                    <p>✉️ ${reserva.correo || 'N/A'}</p>
+                                    <div class="client-dates">🗓️ ${reserva.ingreso} / ${reserva.salida}</div>
+                                </div>
+                                <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${encodeURIComponent(reserva.nombres)}..." target="_blank" class="btn-whatsapp">WhatsApp</a>
+                            </div>
+                        `;
+                        listaTarjetas.insertAdjacentHTML('beforeend', htmlTarjeta);
+                    }
+                });
+            }
+
             renderCalendar(); 
         } catch (error) {
             console.error("Error leyendo BD:", error);
