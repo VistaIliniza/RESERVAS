@@ -1,10 +1,10 @@
 // =========================================
-// CIELO.JS - LÓGICA DE OVERLAP AVANZADA Y ALERTA VISUAL DE RECAMBIO
+// CIELO.JS - LÓGICA OPTIMIZADA DE RESERVAS Y CALENDARIO
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 🔴 URL OFICIAL DEL LODGE CONFIGURADA CORRECTAMENTE COMO API_URL
+    // URL OFICIAL DEL LODGE CONFIGURADA CORRECTAMENTE COMO API_URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
     
     // Inyección de estilos CSS dinámicos
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         /* Día totalmente ocupado */
         .cal-day.full-day { background: #ef4444; color: white; border: none; }
         
-        /* 🔥 NUEVO: DÍA COMPARTIDO (CRUCE DE HORARIOS) VISUALMENTE DISTINTO 🔥 */
+        /* DÍA COMPARTIDO (CRUCE DE HORARIOS) */
         .cal-day.split-day { 
             background: linear-gradient(to right, #ef4444 50%, #10b981 50%); 
             color: white; 
@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .cruce-out .cruce-label { color: #ef4444; }
         .cruce-in .cruce-label { color: #10b981; }
         .cruce-name { font-size: 0.85rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+
+        /* Contenedor con desplazamiento para que la página no sea infinita */
+        #lista-tarjetas-clientes {
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
     `;
     document.head.appendChild(estiloCalendario);
 
@@ -103,10 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
             
-            const reservasCabaña = datos.filter(reserva => String(reserva.cabana).toLowerCase().includes("cielo"));
+            const reservasCabana = datos.filter(reserva => String(reserva.cabana).toLowerCase().includes("cielo"));
             const listaTarjetas = document.getElementById('lista-tarjetas-clientes');
             
-            reservasCabaña.forEach(reserva => {
+            // 1. Procesar todas las fechas para el calendario
+            reservasCabana.forEach(reserva => {
                 if(reserva.ingreso && reserva.salida) {
                     let dIngreso = new Date(reserva.ingreso + 'T12:00:00');
                     let dSalida = new Date(reserva.salida + 'T12:00:00');
@@ -136,25 +144,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     infoFechasOcupadas[strSalida] = infoFechasOcupadas[strSalida] || [];
                     infoFechasOcupadas[strSalida].push({ tipo: 'salida', data: reserva });
                 }
-                
-                if(listaTarjetas && reserva.nombres) {
-                    let celularMostrar = String(reserva.celular).replace(/^'/, "");
-                    celularMostrar = (celularMostrar.length === 9 && celularMostrar.startsWith("9")) ? "0" + celularMostrar : celularMostrar;
-
-                    const htmlTarjeta = `
-                        <div class="client-card">
-                            <div class="client-info">
-                                <h4>${reserva.nombres}</h4>
-                                <p>C.I: ${reserva.cedula} | 📞 ${celularMostrar}</p>
-                                <p>✉️ ${reserva.correo || 'N/A'}</p>
-                                <div class="client-dates">🗓️ ${reserva.ingreso} / ${reserva.salida}</div>
-                            </div>
-                            <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${reserva.nombres}..." target="_blank" class="btn-whatsapp">WhatsApp</a>
-                        </div>
-                    `;
-                    listaTarjetas.insertAdjacentHTML('beforeend', htmlTarjeta);
-                }
             });
+
+            // 2. Renderizar únicamente las 10 reservas más recientes para máxima rapidez
+            if(listaTarjetas) {
+                listaTarjetas.innerHTML = '';
+                const ultimasReservas = reservasCabana.slice(-10).reverse();
+
+                ultimasReservas.forEach(reserva => {
+                    if(reserva.nombres) {
+                        let celularMostrar = String(reserva.celular).replace(/^'/, "");
+                        celularMostrar = (celularMostrar.length === 9 && celularMostrar.startsWith("9")) ? "0" + celularMostrar : celularMostrar;
+
+                        const htmlTarjeta = `
+                            <div class="client-card">
+                                <div class="client-info">
+                                    <h4>${reserva.nombres}</h4>
+                                    <p>C.I: ${reserva.cedula} | 📞 ${celularMostrar}</p>
+                                    <p>✉️ ${reserva.correo || 'N/A'}</p>
+                                    <div class="client-dates">🗓️ ${reserva.ingreso} / ${reserva.salida}</div>
+                                </div>
+                                <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${encodeURIComponent(reserva.nombres)}..." target="_blank" class="btn-whatsapp">WhatsApp</a>
+                            </div>
+                        `;
+                        listaTarjetas.insertAdjacentHTML('beforeend', htmlTarjeta);
+                    }
+                });
+            }
+
             renderCalendar(); 
         } catch (error) {
             console.error("Error leyendo BD:", error);
