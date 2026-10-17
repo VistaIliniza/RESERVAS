@@ -6,7 +6,6 @@
     <title>Directorio de Clientes | Vista Iliniza</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    
     <link rel="stylesheet" href="css/clientes.css">
     
     <style>
@@ -19,21 +18,31 @@
         .client-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
         .client-name { font-weight: 700; color: var(--text-dark); font-size: 0.95rem; margin-bottom: 3px; }
         .client-id { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-        .action-buttons { display: flex; gap: 8px; align-items: center; }
-        .btn-action { padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; transition: all 0.2s; border: none; cursor: pointer; }
+        .action-buttons { display: flex; gap: 6px; align-items: center; }
+        .btn-action { padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; transition: all 0.2s; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-ficha { background: #2d4a27; color: white; } .btn-ficha:hover { background: #1f331b; transform: translateY(-2px); }
         .btn-wsp { background: #10b981; color: white; } .btn-wsp:hover { background: #059669; transform: translateY(-2px); }
         .btn-edit { background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border); } .btn-edit:hover { background: #e2e8f0; }
         .btn-delete { background: #fef2f2; color: #ef4444; } .btn-delete:hover { background: #fee2e2; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; transform: translateY(20px); transition: all 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;}
+        .modal-content { background: white; padding: 25px 30px; border-radius: 20px; width: 92%; max-width: 550px; transform: translateY(20px); transition: all 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 88vh; overflow-y: auto;}
         .modal-overlay.active .modal-content { transform: translateY(0); }
+        
         .form-group { margin-bottom: 15px; } 
         .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; } 
         .form-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; }
         .form-row-dates { display: flex; gap: 10px; }
         .form-row-dates .form-group { flex: 1; }
+
+        /* Estilos de la Ficha */
+        .ficha-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .ficha-header h3 { margin: 0; color: #2d4a27; font-size: 1.25rem; }
+        .ficha-card-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+        .ficha-section-title { font-size: 0.78rem; text-transform: uppercase; font-weight: 800; color: #64748b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .ficha-item-val { font-size: 0.92rem; color: #1e293b; font-weight: 600; line-height: 1.4; }
+        .ficha-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -84,6 +93,64 @@
         </main>
     </div>
 
+    <!-- MODAL 1: FICHA COMPLETA DEL HUÉSPED -->
+    <div class="modal-overlay" id="modal-ficha">
+        <div class="modal-content">
+            <div class="ficha-header">
+                <div>
+                    <h3 id="ficha-nombre">Ficha del Huésped</h3>
+                    <small id="ficha-subtitulo" style="color: #64748b; font-weight: 600;">Vista Iliniza Lodge</small>
+                </div>
+                <button type="button" id="btn-cerrar-ficha" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+
+            <div class="ficha-grid-2">
+                <div class="ficha-card-section">
+                    <div class="ficha-section-title">🏡 Hospedaje</div>
+                    <div class="ficha-item-val" id="ficha-cabana">-</div>
+                </div>
+                <div class="ficha-card-section">
+                    <div class="ficha-section-title">⏰ Hora de Llegada</div>
+                    <div class="ficha-item-val" id="ficha-hora">-</div>
+                </div>
+            </div>
+
+            <div class="ficha-card-section">
+                <div class="ficha-section-title">📅 Período de Estadía</div>
+                <div class="ficha-item-val" id="ficha-fechas">-</div>
+            </div>
+
+            <div class="ficha-card-section">
+                <div class="ficha-section-title">📱 Contacto del Titular</div>
+                <div class="ficha-item-val" id="ficha-contacto">-</div>
+            </div>
+
+            <div class="ficha-card-section">
+                <div class="ficha-section-title">👥 Huéspedes Adultos Adicionales</div>
+                <div class="ficha-item-val" id="ficha-adultos" style="font-weight: 500; font-size: 0.88rem;">-</div>
+            </div>
+
+            <div class="ficha-card-section">
+                <div class="ficha-section-title">🧒 Menores de Edad</div>
+                <div class="ficha-item-val" id="ficha-menores" style="font-weight: 500; font-size: 0.88rem;">-</div>
+            </div>
+
+            <div class="ficha-grid-2">
+                <div class="ficha-card-section">
+                    <div class="ficha-section-title">🚗 Vehículo</div>
+                    <div class="ficha-item-val" id="ficha-vehiculo">-</div>
+                </div>
+                <div class="ficha-card-section">
+                    <div class="ficha-section-title">🐾 Mascota</div>
+                    <div class="ficha-item-val" id="ficha-mascota">-</div>
+                </div>
+            </div>
+
+            <button type="button" id="btn-cerrar-ficha-abajo" class="btn-action" style="width: 100%; margin-top: 15px; padding: 12px; background: #2d4a27; color: white; justify-content: center; font-size: 0.9rem;">Cerrar Ficha</button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDITAR CLIENTE -->
     <div class="modal-overlay" id="modal-editar">
         <div class="modal-content">
             <h3 style="margin-bottom: 5px; color: var(--text-dark);">Editar Cliente</h3>
@@ -99,7 +166,7 @@
                 </div>
                 <div class="form-group">
                     <label>Número celular</label>
-                    <input type="number" id="edit-celular" required>
+                    <input type="text" id="edit-celular" required>
                 </div>
                 <div class="form-group">
                     <label>Correo electrónico</label>
@@ -118,26 +185,67 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="button" id="btn-cancelar-edit" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted);">Cancelar</button>
-                    <button type="submit" class="btn-primary" style="flex: 1;">Guardar Cambios</button>
+                    <button type="button" id="btn-cancelar-edit" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted); cursor: pointer;">Cancelar</button>
+                    <button type="submit" class="btn-action" style="flex: 1; background: #2d4a27; color: white; justify-content: center; font-size: 0.85rem;">Guardar Cambios</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- MODAL 3: BORRAR CLIENTE -->
     <div class="modal-overlay" id="modal-borrar">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
             <div style="font-size: 3.5rem; margin-bottom: 10px;">⚠️</div>
             <h3 style="margin-bottom: 10px; color: var(--text-dark);">¿Eliminar Cliente?</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Esta acción borrará al cliente del Excel de forma permanente. No se puede deshacer.</p>
             <div style="display: flex; gap: 15px; justify-content: center;">
-                <button type="button" id="btn-cancelar-borrar" style="padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted); background: white;">Cancelar</button>
-                <button type="button" class="btn-primary" id="btn-confirmar-borrar" style="background: #ef4444; box-shadow: 0 8px 15px -6px rgba(239, 68, 68, 0.4);">Sí, Eliminar</button>
+                <button type="button" id="btn-cancelar-borrar" style="padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); font-weight: 700; color: var(--text-muted); background: white; cursor: pointer;">Cancelar</button>
+                <button type="button" class="btn-action btn-delete" id="btn-confirmar-borrar" style="padding: 12px 20px; font-size: 0.85rem;">Sí, Eliminar</button>
             </div>
         </div>
     </div>
 
     <script src="js/app.js"></script>
     <script src="js/clientes.js"></script>
+
+    <!-- LÓGICA DE LA FICHA DEL HUÉSPED -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalFicha = document.getElementById('modal-ficha');
+            const btnCerrar = document.getElementById('btn-cerrar-ficha');
+            const btnCerrarAbajo = document.getElementById('btn-cerrar-ficha-abajo');
+
+            function cerrarModalFicha() {
+                modalFicha.classList.remove('active');
+            }
+
+            if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalFicha);
+            if (btnCerrarAbajo) btnCerrarAbajo.addEventListener('click', cerrarModalFicha);
+            modalFicha.addEventListener('click', (e) => {
+                if (e.target === modalFicha) cerrarModalFicha();
+            });
+
+            // Delegación de eventos para el botón "Ver Ficha"
+            document.getElementById('tabla-clientes-body').addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-ficha');
+                if (!btn) return;
+
+                const c = JSON.parse(btn.getAttribute('data-cliente') || '{}');
+                
+                document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
+                document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
+                document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
+                document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
+                document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
+                document.getElementById('ficha-contacto').textContent = `WhatsApp: ${c.celular || '-'} | Email: ${c.correo || '-'}`;
+                document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
+                document.getElementById('ficha-menores').textContent = c.menores || 'Sin menores';
+                document.getElementById('ficha-vehiculo').textContent = c.vehiculo || 'No aplica';
+                document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
+
+                modalFicha.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
