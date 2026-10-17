@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCerrarFicha = document.getElementById('btn-cerrar-ficha');
     const btnCerrarFichaAbajo = document.getElementById('btn-cerrar-ficha-abajo');
 
-    let clientesSistema = [];
-    let clientesMostrados = [];
+    let clientesOriginales = [];
+    let clientesFiltrados = [];
     let cedulaABorrar = null;
 
     // Alertas Flotantes
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarTabla(clientes) {
         if (!tablaBody) return;
         tablaBody.innerHTML = '';
-        clientesMostrados = clientes;
+        clientesFiltrados = clientes;
 
         if (!clientes || clientes.length === 0) {
             if (emptyState) {
@@ -95,10 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-action btn-ficha" onclick="abrirFichaPorIndex(${index})" title="Ver Ficha Completa">👁️ Ficha</button>
+                            <button type="button" class="btn-action btn-ficha" data-idx="${index}" title="Ver Ficha Completa">👁️ Ficha</button>
                             <a href="https://wa.me/593${celularMostrar.startsWith('0') ? celularMostrar.substring(1) : celularMostrar}?text=Hola%20${encodeURIComponent(cliente.nombres)},%20nos%20comunicamos%20de%20Vista%20Iliniza..." target="_blank" class="btn-action btn-wsp">WhatsApp</a>
-                            <button class="btn-action btn-edit" onclick="abrirModalEditar('${cliente.cedula}')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="prepararBorrado('${cliente.cedula}')">Borrar</button>
+                            <button type="button" class="btn-action btn-edit" data-cedula="${cliente.cedula}">Editar</button>
+                            <button type="button" class="btn-action btn-delete" data-cedula="${cliente.cedula}">Borrar</button>
                         </div>
                     </td>
                 `;
@@ -115,8 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
-            clientesSistema = Array.isArray(datos) ? [...datos].reverse() : [];
-            renderizarTabla(clientesSistema);
+            // Los más recientes primero
+            clientesOriginales = Array.isArray(datos) ? [...datos].reverse() : [];
+            renderizarTabla(clientesOriginales);
         } catch (error) {
             console.error('Error al cargar clientes:', error);
             if (emptyState) {
@@ -125,9 +126,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ABRIR FICHA CON DATOS REALES
-    window.abrirFichaPorIndex = function(index) {
-        const c = clientesMostrados[index];
+    // ==========================================
+    // DETECCIÓN DE CLICS EN LA TABLA
+    // ==========================================
+    if (tablaBody) {
+        tablaBody.addEventListener('click', (e) => {
+            const btnFicha = e.target.closest('.btn-ficha');
+            const btnEdit = e.target.closest('.btn-edit');
+            const btnDelete = e.target.closest('.btn-delete');
+
+            if (btnFicha) {
+                const idx = parseInt(btnFicha.getAttribute('data-idx'), 10);
+                abrirFichaModal(idx);
+            } else if (btnEdit) {
+                const ced = btnEdit.getAttribute('data-cedula');
+                abrirModalEditar(ced);
+            } else if (btnDelete) {
+                const ced = btnDelete.getAttribute('data-cedula');
+                prepararBorrado(ced);
+            }
+        });
+    }
+
+    // ABRIR FICHA DEL HUÉSPED
+    function abrirFichaModal(idx) {
+        const c = clientesFiltrados[idx];
         if (!c || !modalFicha) return;
 
         let cel = String(c.celular || '');
@@ -146,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
 
         modalFicha.classList.add('active');
-    };
+    }
 
     function cerrarModalFicha() {
         if (modalFicha) modalFicha.classList.remove('active');
@@ -160,11 +183,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ==========================================
     // BORRADO Y EDICIÓN
-    window.prepararBorrado = function(cedula) {
+    // ==========================================
+    function prepararBorrado(cedula) {
         cedulaABorrar = String(cedula);
         if (modalBorrar) modalBorrar.classList.add('active');
-    };
+    }
 
     if (btnCancelarBorrar) btnCancelarBorrar.addEventListener('click', () => modalBorrar && modalBorrar.classList.remove('active'));
     if (btnCancelarEdit) btnCancelarEdit.addEventListener('click', () => modalEditar && modalEditar.classList.remove('active'));
@@ -176,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             btnConfirmarBorrar.textContent = "Borrando...";
             btnConfirmarBorrar.disabled = true;
 
-            clientesSistema = clientesSistema.filter(c => String(c.cedula) !== cedulaABorrar);
-            renderizarTabla(clientesSistema);
+            clientesOriginales = clientesOriginales.filter(c => String(c.cedula) !== cedulaABorrar);
+            renderizarTabla(clientesOriginales);
             if (modalBorrar) modalBorrar.classList.remove('active');
             
             try {
@@ -196,8 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.abrirModalEditar = function(cedula) {
-        const cliente = clientesSistema.find(c => String(c.cedula).trim() === String(cedula).trim());
+    function abrirModalEditar(cedula) {
+        const cliente = clientesOriginales.find(c => String(c.cedula).trim() === String(cedula).trim());
         if(cliente && modalEditar) {
             let celularMostrar = String(cliente.celular || '');
             if (celularMostrar.startsWith("'")) celularMostrar = celularMostrar.substring(1);
@@ -212,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             modalEditar.classList.add('active');
         }
-    };
+    }
 
     if (formEditar) {
         formEditar.addEventListener('submit', async (e) => {
@@ -246,14 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(datosActualizados)
                 });
 
-                let index = clientesSistema.findIndex(c => String(c.cedula).trim() === String(cedula).trim());
+                let index = clientesOriginales.findIndex(c => String(c.cedula).trim() === String(cedula).trim());
                 if(index !== -1) {
-                    clientesSistema[index].nombres = nombreNuevo;
-                    clientesSistema[index].celular = celularNuevo;
-                    clientesSistema[index].correo = correoNuevo;
-                    clientesSistema[index].ingreso = ingresoNuevo;
-                    clientesSistema[index].salida = salidaNuevo;
-                    renderizarTabla(clientesSistema);
+                    clientesOriginales[index].nombres = nombreNuevo;
+                    clientesOriginales[index].celular = celularNuevo;
+                    clientesOriginales[index].correo = correoNuevo;
+                    clientesOriginales[index].ingreso = ingresoNuevo;
+                    clientesOriginales[index].salida = salidaNuevo;
+                    renderizarTabla(clientesOriginales);
                 }
                 
                 if (modalEditar) modalEditar.classList.remove('active');
@@ -273,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputBuscador) {
         inputBuscador.addEventListener('input', (e) => {
             const termino = e.target.value.toLowerCase();
-            const filtrados = clientesSistema.filter(c => 
+            const filtrados = clientesOriginales.filter(c => 
                 String(c.nombres || '').toLowerCase().includes(termino) || 
                 String(c.cedula || '').toLowerCase().includes(termino) || 
                 String(c.celular || '').toLowerCase().includes(termino) || 
