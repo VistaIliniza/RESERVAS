@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let clientesFiltrados = [];
     let cedulaABorrar = null;
 
-    // Alertas Flotantes
+    // Alertas Flotantes (Toasts)
     function mostrarNotificacion(titulo, mensaje, esError = false) {
         let container = document.querySelector('.toast-container');
         if (!container) {
@@ -54,13 +54,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return partes[0][0].toUpperCase();
     }
 
-    // Limpiador estricto para la hora de llegada (elimina el 1899-12-30)
+    // FORMATEO EXACTO DE LA HORA DE LLEGADA
     function formatearHora(horaRaw) {
         if (!horaRaw || horaRaw === "Sin dato" || horaRaw === "No especificada") return "No especificada";
-        let str = String(horaRaw);
+        let str = String(horaRaw).trim();
+        if (str.startsWith("'")) str = str.substring(1);
+
+        // Si viene en formato ISO (ej. 1899-12-30T12:50:00.000Z), se convierte a hora local
         if (str.includes("T")) {
-            let tiempo = str.split("T")[1];
-            return tiempo.substring(0, 5); // Deja solo HH:mm (ej. 13:04 o 07:50)
+            const fechaObj = new Date(str);
+            if (!isNaN(fechaObj.getTime())) {
+                const horas = String(fechaObj.getHours()).padStart(2, '0');
+                const minutos = String(fechaObj.getMinutes()).padStart(2, '0');
+                return `${horas}:${minutos}`;
+            }
         }
         return str.substring(0, 5);
     }
@@ -126,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
+            // Los más nuevos al principio
             clientesOriginales = Array.isArray(datos) ? [...datos].reverse() : [];
             renderizarTabla(clientesOriginales);
         } catch (error) {
