@@ -54,6 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return partes[0][0].toUpperCase();
     }
 
+    // Limpiador estricto para la hora de llegada (elimina el 1899-12-30)
+    function formatearHora(horaRaw) {
+        if (!horaRaw || horaRaw === "Sin dato" || horaRaw === "No especificada") return "No especificada";
+        let str = String(horaRaw);
+        if (str.includes("T")) {
+            let tiempo = str.split("T")[1];
+            return tiempo.substring(0, 5); // Deja solo HH:mm (ej. 13:04 o 07:50)
+        }
+        return str.substring(0, 5);
+    }
+
     function renderizarTabla(clientes) {
         if (!tablaBody) return;
         tablaBody.innerHTML = '';
@@ -115,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
-            // Los más recientes primero
             clientesOriginales = Array.isArray(datos) ? [...datos].reverse() : [];
             renderizarTabla(clientesOriginales);
         } catch (error) {
@@ -160,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
         document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
         document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
-        document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
+        document.getElementById('ficha-hora').textContent = formatearHora(c.horaLlegada);
         document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
         document.getElementById('ficha-contacto').textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
         document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
