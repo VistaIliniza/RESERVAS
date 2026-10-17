@@ -93,7 +93,7 @@
         </main>
     </div>
 
-    <!-- MODAL 1: FICHA COMPLETA DEL HUÉSPED -->
+    <!-- MODAL: FICHA COMPLETA DEL HUÉSPED -->
     <div class="modal-overlay" id="modal-ficha">
         <div class="modal-content">
             <div class="ficha-header">
@@ -150,7 +150,7 @@
         </div>
     </div>
 
-    <!-- MODAL 2: EDITAR CLIENTE -->
+    <!-- MODAL: EDITAR CLIENTE -->
     <div class="modal-overlay" id="modal-editar">
         <div class="modal-content">
             <h3 style="margin-bottom: 5px; color: var(--text-dark);">Editar Cliente</h3>
@@ -192,7 +192,7 @@
         </div>
     </div>
 
-    <!-- MODAL 3: BORRAR CLIENTE -->
+    <!-- MODAL: BORRAR CLIENTE -->
     <div class="modal-overlay" id="modal-borrar">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
             <div style="font-size: 3.5rem; margin-bottom: 10px;">⚠️</div>
@@ -207,45 +207,5 @@
 
     <script src="js/app.js"></script>
     <script src="js/clientes.js"></script>
-
-    <!-- LÓGICA DE LA FICHA DEL HUÉSPED -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modalFicha = document.getElementById('modal-ficha');
-            const btnCerrar = document.getElementById('btn-cerrar-ficha');
-            const btnCerrarAbajo = document.getElementById('btn-cerrar-ficha-abajo');
-
-            function cerrarModalFicha() {
-                modalFicha.classList.remove('active');
-            }
-
-            if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalFicha);
-            if (btnCerrarAbajo) btnCerrarAbajo.addEventListener('click', cerrarModalFicha);
-            modalFicha.addEventListener('click', (e) => {
-                if (e.target === modalFicha) cerrarModalFicha();
-            });
-
-            // Delegación de eventos para el botón "Ver Ficha"
-            document.getElementById('tabla-clientes-body').addEventListener('click', (e) => {
-                const btn = e.target.closest('.btn-ficha');
-                if (!btn) return;
-
-                const c = JSON.parse(btn.getAttribute('data-cliente') || '{}');
-                
-                document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
-                document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
-                document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
-                document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
-                document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
-                document.getElementById('ficha-contacto').textContent = `WhatsApp: ${c.celular || '-'} | Email: ${c.correo || '-'}`;
-                document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
-                document.getElementById('ficha-menores').textContent = c.menores || 'Sin menores';
-                document.getElementById('ficha-vehiculo').textContent = c.vehiculo || 'No aplica';
-                document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
-
-                modalFicha.classList.add('active');
-            });
-        });
-    </script>
 </body>
 </html>
