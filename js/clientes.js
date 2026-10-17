@@ -1,5 +1,5 @@
 // =========================================
-// CLIENTES.JS - EDICIÓN DE FECHAS Y MODALES REALES
+// CLIENTES.JS - EDICIÓN, MODALES Y FICHA DE HUÉSPED
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBorrar = document.getElementById('modal-borrar');
     const btnCancelarBorrar = document.getElementById('btn-cancelar-borrar');
     const btnConfirmarBorrar = document.getElementById('btn-confirmar-borrar');
+
+    const modalFicha = document.getElementById('modal-ficha');
+    const btnCerrarFicha = document.getElementById('btn-cerrar-ficha');
+    const btnCerrarFichaAbajo = document.getElementById('btn-cerrar-ficha-abajo');
 
     let clientesSistema = [];
     let cedulaABorrar = null;
@@ -88,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-action btn-ficha" onclick="abrirFichaCliente('${cliente.cedula}')" title="Ver Ficha Completa">👁️ Ficha</button>
                             <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${cliente.nombres},%20nos%20comunicamos%20de%20Vista%20Iliniza..." target="_blank" class="btn-action btn-wsp">WhatsApp</a>
                             <button class="btn-action btn-edit" onclick="abrirModalEditar('${cliente.cedula}')">Editar</button>
                             <button class="btn-action btn-delete" onclick="prepararBorrado('${cliente.cedula}')">Borrar</button>
@@ -112,6 +117,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ==========================================
+    // LÓGICA DE LA FICHA DEL HUÉSPED
+    // ==========================================
+    window.abrirFichaCliente = function(cedula) {
+        const c = clientesSistema.find(cli => String(cli.cedula) === String(cedula));
+        if (!c) return;
+
+        let cel = String(c.celular);
+        if (cel.startsWith("'")) cel = cel.substring(1);
+        if (cel.length === 9 && cel.startsWith("9")) cel = "0" + cel;
+
+        document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
+        document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
+        document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
+        document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
+        document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
+        document.getElementById('ficha-contacto').textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
+        document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
+        document.getElementById('ficha-menores').textContent = c.menores || 'Sin menores';
+        document.getElementById('ficha-vehiculo').textContent = c.vehiculo || 'No aplica';
+        document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
+
+        modalFicha.classList.add('active');
+    };
+
+    function cerrarModalFicha() {
+        modalFicha.classList.remove('active');
+    }
+
+    if (btnCerrarFicha) btnCerrarFicha.addEventListener('click', cerrarModalFicha);
+    if (btnCerrarFichaAbajo) btnCerrarFichaAbajo.addEventListener('click', cerrarModalFicha);
+    modalFicha.addEventListener('click', (e) => {
+        if (e.target === modalFicha) cerrarModalFicha();
+    });
+
+    // ==========================================
+    // BORRADO Y EDICIÓN
+    // ==========================================
     window.prepararBorrado = function(cedula) {
         cedulaABorrar = String(cedula);
         modalBorrar.classList.add('active');
