@@ -4,7 +4,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 🔴 URL OFICIAL DEL LODGE CONFIGURADA CORRECTAMENTE COMO API_URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbz4pFHwCfKEhodnpHwDAe8ZiPjp6fTMKnD_0WWdV7aXKL7p8Zw_ruuxYP_0l_7HGEMsLw/exec?action=admin';
     
     const tablaBody = document.getElementById('tabla-clientes-body');
@@ -55,19 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderizarTabla(clientes) {
+        if (!tablaBody) return;
         tablaBody.innerHTML = '';
-        if (clientes.length === 0) {
-            emptyState.style.display = 'block';
-            emptyState.innerHTML = '<p>No se encontraron clientes o está cargando...</p>';
+        if (!clientes || clientes.length === 0) {
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                emptyState.innerHTML = '<p>No se encontraron clientes.</p>';
+            }
         } else {
-            emptyState.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
             let clientesInvertidos = [...clientes].reverse();
 
             clientesInvertidos.forEach(cliente => {
                 if(!cliente.nombres || cliente.nombres === "") return;
                 
-                // Formateo estricto del cero a la izquierda
-                let celularMostrar = String(cliente.celular);
+                let celularMostrar = String(cliente.celular || '');
                 if (celularMostrar.startsWith("'")) celularMostrar = celularMostrar.substring(1);
                 if (celularMostrar.length === 9 && celularMostrar.startsWith("9")) {
                     celularMostrar = "0" + celularMostrar;
@@ -81,19 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="client-name">${cliente.nombres}</div>
                         </div>
                     </td>
-                    <td class="client-id">${cliente.cedula}</td>
+                    <td class="client-id">${cliente.cedula || '-'}</td>
                     <td>
-                        <div class="client-name">${celularMostrar}</div>
+                        <div class="client-name">${celularMostrar || 'Sin celular'}</div>
                         <div class="client-id">${cliente.correo || 'Sin correo'}</div>
                     </td>
                     <td>
-                        <div class="client-name">${cliente.cabana}</div>
-                        <div class="client-id">${cliente.ingreso} a ${cliente.salida}</div>
+                        <div class="client-name">${cliente.cabana || 'Sin cabaña'}</div>
+                        <div class="client-id">${cliente.ingreso || '-'} a ${cliente.salida || '-'}</div>
                     </td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn-action btn-ficha" onclick="abrirFichaCliente('${cliente.cedula}')" title="Ver Ficha Completa">👁️ Ficha</button>
-                            <a href="https://wa.me/593${celularMostrar.substring(1)}?text=Hola%20${cliente.nombres},%20nos%20comunicamos%20de%20Vista%20Iliniza..." target="_blank" class="btn-action btn-wsp">WhatsApp</a>
+                            <a href="https://wa.me/593${celularMostrar.startsWith('0') ? celularMostrar.substring(1) : celularMostrar}?text=Hola%20${encodeURIComponent(cliente.nombres)},%20nos%20comunicamos%20de%20Vista%20Iliniza..." target="_blank" class="btn-action btn-wsp">WhatsApp</a>
                             <button class="btn-action btn-edit" onclick="abrirModalEditar('${cliente.cedula}')">Editar</button>
                             <button class="btn-action btn-delete" onclick="prepararBorrado('${cliente.cedula}')">Borrar</button>
                         </div>
@@ -106,14 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cargarClientesDesdeGoogle() {
         try {
-            emptyState.innerHTML = '<p>⏳ Conectando con la base de datos...</p>';
-            emptyState.style.display = 'block';
+            if (emptyState) {
+                emptyState.innerHTML = '<p>⏳ Conectando con la base de datos...</p>';
+                emptyState.style.display = 'block';
+            }
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
-            clientesSistema = datos;
+            clientesSistema = Array.isArray(datos) ? datos : [];
             renderizarTabla(clientesSistema);
         } catch (error) {
-            emptyState.innerHTML = '<p>❌ Error de conexión. Revisa tu internet.</p>';
+            console.error('Error al cargar clientes:', error);
+            if (emptyState) {
+                emptyState.innerHTML = '<p>❌ Error de conexión al cargar la lista.</p>';
+            }
         }
     }
 
@@ -122,150 +128,174 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     window.abrirFichaCliente = function(cedula) {
         const c = clientesSistema.find(cli => String(cli.cedula) === String(cedula));
-        if (!c) return;
+        if (!c || !modalFicha) return;
 
-        let cel = String(c.celular);
+        let cel = String(c.celular || '');
         if (cel.startsWith("'")) cel = cel.substring(1);
         if (cel.length === 9 && cel.startsWith("9")) cel = "0" + cel;
 
-        document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
-        document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
-        document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
-        document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
-        document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
-        document.getElementById('ficha-contacto').textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
-        document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
-        document.getElementById('ficha-menores').textContent = c.menores || 'Sin menores';
-        document.getElementById('ficha-vehiculo').textContent = c.vehiculo || 'No aplica';
-        document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
+        const elNombre = document.getElementById('ficha-nombre');
+        const elSubtitulo = document.getElementById('ficha-subtitulo');
+        const elCabana = document.getElementById('ficha-cabana');
+        const elHora = document.getElementById('ficha-hora');
+        const elFechas = document.getElementById('ficha-fechas');
+        const elContacto = document.getElementById('ficha-contacto');
+        const elAdultos = document.getElementById('ficha-adultos');
+        const elMenores = document.getElementById('ficha-menores');
+        const elVehiculo = document.getElementById('ficha-vehiculo');
+        const elMascota = document.getElementById('ficha-mascota');
+
+        if (elNombre) elNombre.textContent = c.nombres || 'Sin nombre';
+        if (elSubtitulo) elSubtitulo.textContent = 'Doc: ' + (c.cedula || 'Sin dato');
+        if (elCabana) elCabana.textContent = c.cabana || 'No asignada';
+        if (elHora) elHora.textContent = c.horaLlegada || 'No especificada';
+        if (elFechas) elFechas.textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
+        if (elContacto) elContacto.textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
+        if (elAdultos) elAdultos.textContent = c.adultos || 'Ninguno adicional';
+        if (elMenores) elMenores.textContent = c.menores || 'Sin menores';
+        if (elVehiculo) elVehiculo.textContent = c.vehiculo || 'No aplica';
+        if (elMascota) elMascota.textContent = c.mascota || 'No';
 
         modalFicha.classList.add('active');
     };
 
     function cerrarModalFicha() {
-        modalFicha.classList.remove('active');
+        if (modalFicha) modalFicha.classList.remove('active');
     }
 
     if (btnCerrarFicha) btnCerrarFicha.addEventListener('click', cerrarModalFicha);
     if (btnCerrarFichaAbajo) btnCerrarFichaAbajo.addEventListener('click', cerrarModalFicha);
-    modalFicha.addEventListener('click', (e) => {
-        if (e.target === modalFicha) cerrarModalFicha();
-    });
+    if (modalFicha) {
+        modalFicha.addEventListener('click', (e) => {
+            if (e.target === modalFicha) cerrarModalFicha();
+        });
+    }
 
     // ==========================================
     // BORRADO Y EDICIÓN
     // ==========================================
     window.prepararBorrado = function(cedula) {
         cedulaABorrar = String(cedula);
-        modalBorrar.classList.add('active');
+        if (modalBorrar) modalBorrar.classList.add('active');
     };
 
-    btnCancelarBorrar.addEventListener('click', () => modalBorrar.classList.remove('active'));
-    btnCancelarEdit.addEventListener('click', () => modalEditar.classList.remove('active'));
+    if (btnCancelarBorrar) btnCancelarBorrar.addEventListener('click', () => modalBorrar && modalBorrar.classList.remove('active'));
+    if (btnCancelarEdit) btnCancelarEdit.addEventListener('click', () => modalEditar && modalEditar.classList.remove('active'));
 
-    btnConfirmarBorrar.addEventListener('click', async () => {
-        if(!cedulaABorrar) return;
-        
-        btnConfirmarBorrar.textContent = "Borrando...";
-        btnConfirmarBorrar.disabled = true;
+    if (btnConfirmarBorrar) {
+        btnConfirmarBorrar.addEventListener('click', async () => {
+            if(!cedulaABorrar) return;
+            
+            btnConfirmarBorrar.textContent = "Borrando...";
+            btnConfirmarBorrar.disabled = true;
 
-        clientesSistema = clientesSistema.filter(c => String(c.cedula) !== cedulaABorrar);
-        renderizarTabla(clientesSistema);
-        modalBorrar.classList.remove('active');
-        
-        try {
-            await fetch(API_URL, {
-                method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "delete", cedula: cedulaABorrar })
-            });
-            mostrarNotificacion("Cliente Eliminado", "Se borró exitosamente de la base de datos.", true);
-        } catch (error) {
-            console.error("Error al borrar en BD.");
-        } finally {
-            btnConfirmarBorrar.textContent = "Sí, Eliminar";
-            btnConfirmarBorrar.disabled = false;
-            cedulaABorrar = null;
-        }
-    });
+            clientesSistema = clientesSistema.filter(c => String(c.cedula) !== cedulaABorrar);
+            renderizarTabla(clientesSistema);
+            if (modalBorrar) modalBorrar.classList.remove('active');
+            
+            try {
+                await fetch(API_URL, {
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "delete", cedula: cedulaABorrar })
+                });
+                mostrarNotificacion("Cliente Eliminado", "Se borró exitosamente de la base de datos.", true);
+            } catch (error) {
+                console.error("Error al borrar en BD.");
+            } finally {
+                btnConfirmarBorrar.textContent = "Sí, Eliminar";
+                btnConfirmarBorrar.disabled = false;
+                cedulaABorrar = null;
+            }
+        });
+    }
 
     window.abrirModalEditar = function(cedula) {
         const cliente = clientesSistema.find(c => String(c.cedula) === String(cedula));
-        if(cliente) {
-            let celularMostrar = String(cliente.celular);
+        if(cliente && modalEditar) {
+            let celularMostrar = String(cliente.celular || '');
             if (celularMostrar.startsWith("'")) celularMostrar = celularMostrar.substring(1);
             if (celularMostrar.length === 9 && celularMostrar.startsWith("9")) celularMostrar = "0" + celularMostrar;
 
-            document.getElementById('edit-cedula').value = cliente.cedula;
-            document.getElementById('edit-nombre').value = cliente.nombres;
+            document.getElementById('edit-cedula').value = cliente.cedula || '';
+            document.getElementById('edit-nombre').value = cliente.nombres || '';
             document.getElementById('edit-celular').value = celularMostrar;
-            document.getElementById('edit-correo').value = cliente.correo;
-            
-            // Inyección de fechas al Modal
-            document.getElementById('edit-ingreso').value = cliente.ingreso;
-            document.getElementById('edit-salida').value = cliente.salida;
+            document.getElementById('edit-correo').value = cliente.correo || '';
+            document.getElementById('edit-ingreso').value = cliente.ingreso || '';
+            document.getElementById('edit-salida').value = cliente.salida || '';
 
             modalEditar.classList.add('active');
         }
     };
 
-    formEditar.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btnSubmit = formEditar.querySelector('button[type="submit"]');
-        btnSubmit.textContent = "Guardando...";
-        btnSubmit.disabled = true;
-
-        const cedula = document.getElementById('edit-cedula').value;
-        const nombreNuevo = document.getElementById('edit-nombre').value;
-        const celularNuevo = "'" + document.getElementById('edit-celular').value; 
-        const correoNuevo = document.getElementById('edit-correo').value;
-        const ingresoNuevo = document.getElementById('edit-ingreso').value;
-        const salidaNuevo = document.getElementById('edit-salida').value;
-
-        const datosActualizados = {
-            action: "update",
-            cedula: cedula,
-            nombres: nombreNuevo,
-            celular: celularNuevo,
-            correo: correoNuevo,
-            ingreso: ingresoNuevo,
-            salida: salidaNuevo
-        };
-
-        try {
-            await fetch(API_URL, {
-                method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosActualizados)
-            });
-
-            let index = clientesSistema.findIndex(c => String(c.cedula) === String(cedula));
-            if(index !== -1) {
-                clientesSistema[index].nombres = nombreNuevo;
-                clientesSistema[index].celular = celularNuevo;
-                clientesSistema[index].correo = correoNuevo;
-                clientesSistema[index].ingreso = ingresoNuevo;
-                clientesSistema[index].salida = salidaNuevo;
-                renderizarTabla(clientesSistema);
+    if (formEditar) {
+        formEditar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSubmit = formEditar.querySelector('button[type="submit"]');
+            if (btnSubmit) {
+                btnSubmit.textContent = "Guardando...";
+                btnSubmit.disabled = true;
             }
-            
-            modalEditar.classList.remove('active');
-            mostrarNotificacion("¡Actualizado!", "Cambios guardados en Excel de forma permanente.");
 
-        } catch(error) {
-            mostrarNotificacion("Error", "No se pudo guardar en el Excel.", true);
-        } finally {
-            btnSubmit.textContent = "Guardar Cambios";
-            btnSubmit.disabled = false;
-        }
-    });
+            const cedula = document.getElementById('edit-cedula').value;
+            const nombreNuevo = document.getElementById('edit-nombre').value;
+            const celularNuevo = "'" + document.getElementById('edit-celular').value; 
+            const correoNuevo = document.getElementById('edit-correo').value;
+            const ingresoNuevo = document.getElementById('edit-ingreso').value;
+            const salidaNuevo = document.getElementById('edit-salida').value;
 
-    inputBuscador.addEventListener('input', (e) => {
-        const termino = e.target.value.toLowerCase();
-        const filtrados = clientesSistema.filter(c => 
-            String(c.nombres).toLowerCase().includes(termino) || String(c.cedula).toLowerCase().includes(termino) || 
-            String(c.celular).toLowerCase().includes(termino) || String(c.cabana).toLowerCase().includes(termino)
-        );
-        renderizarTabla(filtrados);
-    });
+            const datosActualizados = {
+                action: "update",
+                cedula: cedula,
+                nombres: nombreNuevo,
+                celular: celularNuevo,
+                correo: correoNuevo,
+                ingreso: ingresoNuevo,
+                salida: salidaNuevo
+            };
 
+            try {
+                await fetch(API_URL, {
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(datosActualizados)
+                });
+
+                let index = clientesSistema.findIndex(c => String(c.cedula) === String(cedula));
+                if(index !== -1) {
+                    clientesSistema[index].nombres = nombreNuevo;
+                    clientesSistema[index].celular = celularNuevo;
+                    clientesSistema[index].correo = correoNuevo;
+                    clientesSistema[index].ingreso = ingresoNuevo;
+                    clientesSistema[index].salida = salidaNuevo;
+                    renderizarTabla(clientesSistema);
+                }
+                
+                if (modalEditar) modalEditar.classList.remove('active');
+                mostrarNotificacion("¡Actualizado!", "Cambios guardados en Excel de forma permanente.");
+
+            } catch(error) {
+                mostrarNotificacion("Error", "No se pudo guardar en el Excel.", true);
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.textContent = "Guardar Cambios";
+                    btnSubmit.disabled = false;
+                }
+            }
+        });
+    }
+
+    if (inputBuscador) {
+        inputBuscador.addEventListener('input', (e) => {
+            const termino = e.target.value.toLowerCase();
+            const filtrados = clientesSistema.filter(c => 
+                String(c.nombres || '').toLowerCase().includes(termino) || 
+                String(c.cedula || '').toLowerCase().includes(termino) || 
+                String(c.celular || '').toLowerCase().includes(termino) || 
+                String(c.cabana || '').toLowerCase().includes(termino)
+            );
+            renderizarTabla(filtrados);
+        });
+    }
+
+    // Iniciar carga
     cargarClientesDesdeGoogle();
 });
