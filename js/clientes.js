@@ -23,9 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCerrarFichaAbajo = document.getElementById('btn-cerrar-ficha-abajo');
 
     let clientesSistema = [];
+    let clientesMostrados = [];
     let cedulaABorrar = null;
 
-    // Alertas Flotantes Premium (Toasts)
+    // Alertas Flotantes
     function mostrarNotificacion(titulo, mensaje, esError = false) {
         let container = document.querySelector('.toast-container');
         if (!container) {
@@ -56,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarTabla(clientes) {
         if (!tablaBody) return;
         tablaBody.innerHTML = '';
+        clientesMostrados = clientes;
+
         if (!clientes || clientes.length === 0) {
             if (emptyState) {
                 emptyState.style.display = 'block';
@@ -63,9 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             if (emptyState) emptyState.style.display = 'none';
-            let clientesInvertidos = [...clientes].reverse();
 
-            clientesInvertidos.forEach(cliente => {
+            clientes.forEach((cliente, index) => {
                 if(!cliente.nombres || cliente.nombres === "") return;
                 
                 let celularMostrar = String(cliente.celular || '');
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-action btn-ficha" onclick="abrirFichaCliente('${cliente.cedula}')" title="Ver Ficha Completa">👁️ Ficha</button>
+                            <button class="btn-action btn-ficha" onclick="abrirFichaPorIndex(${index})" title="Ver Ficha Completa">👁️ Ficha</button>
                             <a href="https://wa.me/593${celularMostrar.startsWith('0') ? celularMostrar.substring(1) : celularMostrar}?text=Hola%20${encodeURIComponent(cliente.nombres)},%20nos%20comunicamos%20de%20Vista%20Iliniza..." target="_blank" class="btn-action btn-wsp">WhatsApp</a>
                             <button class="btn-action btn-edit" onclick="abrirModalEditar('${cliente.cedula}')">Editar</button>
                             <button class="btn-action btn-delete" onclick="prepararBorrado('${cliente.cedula}')">Borrar</button>
@@ -113,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const respuesta = await fetch(API_URL);
             const datos = await respuesta.json();
-            clientesSistema = Array.isArray(datos) ? datos : [];
+            clientesSistema = Array.isArray(datos) ? [...datos].reverse() : [];
             renderizarTabla(clientesSistema);
         } catch (error) {
             console.error('Error al cargar clientes:', error);
@@ -123,38 +125,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==========================================
-    // LÓGICA DE LA FICHA DEL HUÉSPED
-    // ==========================================
-    window.abrirFichaCliente = function(cedula) {
-        const c = clientesSistema.find(cli => String(cli.cedula) === String(cedula));
+    // ABRIR FICHA CON DATOS REALES
+    window.abrirFichaPorIndex = function(index) {
+        const c = clientesMostrados[index];
         if (!c || !modalFicha) return;
 
         let cel = String(c.celular || '');
         if (cel.startsWith("'")) cel = cel.substring(1);
         if (cel.length === 9 && cel.startsWith("9")) cel = "0" + cel;
 
-        const elNombre = document.getElementById('ficha-nombre');
-        const elSubtitulo = document.getElementById('ficha-subtitulo');
-        const elCabana = document.getElementById('ficha-cabana');
-        const elHora = document.getElementById('ficha-hora');
-        const elFechas = document.getElementById('ficha-fechas');
-        const elContacto = document.getElementById('ficha-contacto');
-        const elAdultos = document.getElementById('ficha-adultos');
-        const elMenores = document.getElementById('ficha-menores');
-        const elVehiculo = document.getElementById('ficha-vehiculo');
-        const elMascota = document.getElementById('ficha-mascota');
-
-        if (elNombre) elNombre.textContent = c.nombres || 'Sin nombre';
-        if (elSubtitulo) elSubtitulo.textContent = 'Doc: ' + (c.cedula || 'Sin dato');
-        if (elCabana) elCabana.textContent = c.cabana || 'No asignada';
-        if (elHora) elHora.textContent = c.horaLlegada || 'No especificada';
-        if (elFechas) elFechas.textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
-        if (elContacto) elContacto.textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
-        if (elAdultos) elAdultos.textContent = c.adultos || 'Ninguno adicional';
-        if (elMenores) elMenores.textContent = c.menores || 'Sin menores';
-        if (elVehiculo) elVehiculo.textContent = c.vehiculo || 'No aplica';
-        if (elMascota) elMascota.textContent = c.mascota || 'No';
+        document.getElementById('ficha-nombre').textContent = c.nombres || 'Sin nombre';
+        document.getElementById('ficha-subtitulo').textContent = 'Doc: ' + (c.cedula || 'Sin dato');
+        document.getElementById('ficha-cabana').textContent = c.cabana || 'No asignada';
+        document.getElementById('ficha-hora').textContent = c.horaLlegada || 'No especificada';
+        document.getElementById('ficha-fechas').textContent = `${c.ingreso || '-'} hasta ${c.salida || '-'}`;
+        document.getElementById('ficha-contacto').textContent = `WhatsApp: ${cel || '-'} | Email: ${c.correo || '-'}`;
+        document.getElementById('ficha-adultos').textContent = c.adultos || 'Ninguno adicional';
+        document.getElementById('ficha-menores').textContent = c.menores || 'Sin menores';
+        document.getElementById('ficha-vehiculo').textContent = c.vehiculo || 'No aplica';
+        document.getElementById('ficha-mascota').textContent = c.mascota || 'No';
 
         modalFicha.classList.add('active');
     };
@@ -171,9 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
     // BORRADO Y EDICIÓN
-    // ==========================================
     window.prepararBorrado = function(cedula) {
         cedulaABorrar = String(cedula);
         if (modalBorrar) modalBorrar.classList.add('active');
@@ -210,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.abrirModalEditar = function(cedula) {
-        const cliente = clientesSistema.find(c => String(c.cedula) === String(cedula));
+        const cliente = clientesSistema.find(c => String(c.cedula).trim() === String(cedula).trim());
         if(cliente && modalEditar) {
             let celularMostrar = String(cliente.celular || '');
             if (celularMostrar.startsWith("'")) celularMostrar = celularMostrar.substring(1);
@@ -259,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(datosActualizados)
                 });
 
-                let index = clientesSistema.findIndex(c => String(c.cedula) === String(cedula));
+                let index = clientesSistema.findIndex(c => String(c.cedula).trim() === String(cedula).trim());
                 if(index !== -1) {
                     clientesSistema[index].nombres = nombreNuevo;
                     clientesSistema[index].celular = celularNuevo;
@@ -296,6 +283,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Iniciar carga
     cargarClientesDesdeGoogle();
 });
